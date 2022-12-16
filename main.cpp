@@ -10,10 +10,11 @@ unsigned char files[8];
 unsigned char filesLastState[8];
 
 char fileLetter[1];
-char coord1[4];
-char coord2[4];
+char coord1[2];
+char coord2[2];
 
 bool moveComplete = true;
+bool gameStarted = false;
 
 // TODO Remove test bool
 bool tempStart = false;
@@ -57,10 +58,13 @@ void getChangedCoordinate(int fileIndex, char newData) {
         if ( (files[0] >> (7 - i) & 1) != (newData >> (7 - i) & 1) ) {
             int rank = 8 - i;
 
-            coord1[0] = fileLetter[0];
-            coord1[1] = char(rank);
-            printf("%c", coord1[0]);
-            printf("%d", coord1[1]);
+            if (moveComplete == false) {
+                coord1[0] = fileLetter[0];
+                coord1[1] = char(rank);
+            } else {
+                coord2[0] = fileLetter[0];
+                coord2[1] = char(rank);
+            }
         }
     }
 }
@@ -105,6 +109,14 @@ unsigned char readShiftRegister() {
     return registerData;
 }
 
+bool wasMoveCancelled() {
+    if (coord1[0] == coord2[0] && coord1[1] == coord2[1]) {
+        return true;
+    }
+
+    return false;
+}
+
 int main() {
     stdio_init_all();
     gpio_init(led);
@@ -127,23 +139,37 @@ int main() {
             getFileLetter(0, fileLetter);
 
             if ((dataRead > files[0]) && moveComplete == false) {
+                getChangedCoordinate(0, dataRead);
                 printf("MOVE ENDED\n");
-                printf("Piece placed: ");
+                    
                 moveComplete = true;
+                if (!gameStarted) {
+                    gameStarted = true;
+                }
+
+                if (moveComplete && gameStarted && !wasMoveCancelled()) {
+                    printf("UCI: ");
+                    printf("%c", coord1[0]);
+                    printf("%d", coord1[1]);
+                    printf("%c", coord2[0]);
+                    printf("%d", coord2[1]);
+                    printf("\n\n");
+                }
+
+                if (wasMoveCancelled()) {
+                    printf("Piece replaced! Move Cancelled\n\n");
+                }
             }
 
             if (dataRead < files[0]) {
                 if (moveComplete = true) {
+                    getChangedCoordinate(0, dataRead);
                     printf("MOVE STARTED\n");
                 }
-                printf("Piece lifted: ");
                 moveComplete = false;
             }
 
-            getChangedCoordinate(0, dataRead);
             files[0] = dataRead;
-
-            printf("\n\n");
         }
 
         sleep_ms(10);
