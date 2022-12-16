@@ -102,9 +102,12 @@ int main() {
         printf("Piece coordinates:\n");
         for (int i = 0; i < 8; i++) {
             if ((files[0] >> (7 - i) & 1) == 1) {
-                printf("%s", fileLetter);
-                printf("%d", (8 - i));
-                // printf("%d", (files[0] >> (7 - i)) & 1);
+                int rank = 8 - i;
+
+                coord1[0] = fileLetter[0];
+                coord1[1] = char(rank);
+                printf("%c", coord1[0]);
+                printf("%d", coord1[1]);
             }
         }
         printf("\n\n");
