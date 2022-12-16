@@ -6,7 +6,44 @@ const uint clockEnable = 18;
 const uint dataIn = 14;
 const uint clockIn = 19;
 
+unsigned char files[8];
+char fileLetter[1];
+char coord1[4];
+char coord2[4];
+
 const uint led = 25;
+
+void getFileLetter(uint index, char* outStr) {
+    switch (index) {
+        case 0:
+            outStr[0] = 'a';
+            break;
+        case 1:
+            outStr[0] = 'b';
+            break;
+        case 2:
+            outStr[0] = 'c';
+            break;
+        case 3:
+            outStr[0] = 'd';
+            break;
+        case 4:
+            outStr[0] = 'e';
+            break;
+        case 5:
+            outStr[0] = 'f';
+            break;
+        case 6:
+            outStr[0] = 'g';
+            break;
+        case 7:
+            outStr[0] = 'h';
+            break;
+        default:
+            outStr[0] = 'z';
+            break;
+    }
+}
 
 void initShiftRegPins() {
     gpio_init(load);
@@ -59,14 +96,21 @@ int main() {
         sleep_ms(500);
         gpio_put(led, true);
 
-        unsigned char aFile = readShiftRegister();
+        files[0] = readShiftRegister();
+        getFileLetter(0, fileLetter);
 
-        printf("Pin states:\n");
+        printf("Piece coordinates:\n");
         for (int i = 0; i < 8; i++) {
-            printf("%d", (aFile >> (7 - i)) & 1);
-        }
+            if ((files[0] >> (7 - i) & 1) == 1) {
+                int rank = 8 - i;
 
-        printf("\n%d\n", aFile);
+                coord1[0] = fileLetter[0];
+                coord1[1] = char(rank);
+                printf("%c", coord1[0]);
+                printf("%d", coord1[1]);
+            }
+        }
+        printf("\n\n");
 
         sleep_ms(500);
         gpio_put(led, false);
