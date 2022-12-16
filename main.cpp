@@ -7,6 +7,8 @@ const uint dataIn = 14;
 const uint clockIn = 19;
 
 unsigned char files[8];
+unsigned char filesLastState[8];
+
 char fileLetter[1];
 char coord1[4];
 char coord2[4];
@@ -42,6 +44,19 @@ void getFileLetter(uint index, char* outStr) {
         default:
             outStr[0] = 'z';
             break;
+    }
+}
+
+void getChangedCoordinate(int fileIndex, char newData) {
+    for (int i = 0; i < 8; i++) {
+        if ( (files[0] >> (7 - i) & 1) != (newData >> (7 - i) & 1) ) {
+            int rank = 8 - i;
+
+            coord1[0] = fileLetter[0];
+            coord1[1] = char(rank);
+            printf("%c", coord1[0]);
+            printf("%d", coord1[1]);
+        }
     }
 }
 
@@ -89,30 +104,29 @@ int main() {
     stdio_init_all();
     gpio_init(led);
     gpio_set_dir(led, GPIO_OUT);
-
+    gpio_put(led, true);
     initShiftRegPins();
 
     while(true) {
-        sleep_ms(500);
-        gpio_put(led, true);
+        unsigned char dataRead = readShiftRegister();
 
-        files[0] = readShiftRegister();
-        getFileLetter(0, fileLetter);
+        if (dataRead != files[0]) {
+            getFileLetter(0, fileLetter);
 
-        printf("Piece coordinates:\n");
-        for (int i = 0; i < 8; i++) {
-            if ((files[0] >> (7 - i) & 1) == 1) {
-                int rank = 8 - i;
-
-                coord1[0] = fileLetter[0];
-                coord1[1] = char(rank);
-                printf("%c", coord1[0]);
-                printf("%d", coord1[1]);
+            if (dataRead > files[0]) {
+                printf("Piece placed: ");
             }
-        }
-        printf("\n\n");
 
-        sleep_ms(500);
-        gpio_put(led, false);
+            if (dataRead < files[0]) {
+                printf("Piece lifted: ");
+            }
+
+            getChangedCoordinate(0, dataRead);
+            files[0] = dataRead;
+
+            printf("\n\n");
+        }
+
+        sleep_ms(10);
     }
 }
