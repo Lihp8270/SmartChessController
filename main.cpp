@@ -1,12 +1,50 @@
 #include <stdio.h>
+#include <string>
 #include "pico/stdlib.h"
+
+using namespace std;
 
 const uint load = 20;
 const uint clockEnable = 18;
 const uint dataIn = 14;
 const uint clockIn = 19;
 
+unsigned char files[8];
+
 const uint led = 25;
+
+string getFileLetter(uint index) {
+    switch (index) {
+        case 0:
+            return "a";
+            break;
+        case 1:
+            return "b";
+            break;
+        case 2:
+            return "c";
+            break;
+        case 3:
+            return "d";
+            break;
+        case 4:
+            return "e";
+            break;
+        case 5:
+            return "f";
+            break;
+        case 6:
+            return "g";
+            break;
+        case 7:
+            return "h";
+            break;
+        default:
+            break;
+    }
+
+    return "error";
+}
 
 void initShiftRegPins() {
     gpio_init(load);
@@ -59,14 +97,14 @@ int main() {
         sleep_ms(500);
         gpio_put(led, true);
 
-        unsigned char aFile = readShiftRegister();
+        files[0] = readShiftRegister();
 
-        printf("Pin states:\n");
+        printf("Piece coordinates:\n");
         for (int i = 0; i < 8; i++) {
-            printf("%d", (aFile >> (7 - i)) & 1);
+            printf("%d", (files[0] >> (7 - i)) & 1);
         }
 
-        printf("\n%d\n", aFile);
+        printf("\n%d\n", files[0]);
 
         sleep_ms(500);
         gpio_put(led, false);
