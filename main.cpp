@@ -22,6 +22,32 @@ void initShiftRegPins() {
     gpio_pull_up(dataIn);
 }
 
+void readShiftRegisterPins() {
+    // Pulse load pin to get data from parallel input
+    gpio_put(load, false);
+    sleep_ms(5);
+    gpio_put(load, true);
+    sleep_ms(5);
+}
+
+unsigned char readShiftRegister() {
+    unsigned char registerData = 0b00000000;
+
+    readShiftRegisterPins();
+
+    // Get data from shift register
+    gpio_put(clockEnable, false);
+
+    for (int i = 0; i < 8; i++) {
+        gpio_put(clockIn, true);
+        registerData |= gpio_get(dataIn) << i;
+        gpio_put(clockIn, false);
+    }
+    gpio_put(clockEnable, true);
+
+    return registerData;
+}
+
 int main() {
     stdio_init_all();
     gpio_init(led);
@@ -32,23 +58,15 @@ int main() {
     while(true) {
         sleep_ms(500);
         gpio_put(led, true);
-        
-        // Pulse load pin to get data from parallel input
-        gpio_put(load, false);
-        sleep_ms(5);
-        gpio_put(load, true);
-        sleep_ms(5);
 
-        // Get data from shift register
-        gpio_put(clockEnable, false);
+        unsigned char aFile = readShiftRegister();
 
         printf("Pin states:\n");
-        for (int i = 0; i<8; i++) {
-            gpio_put(clockIn, true);
-            printf("%d\n", gpio_get(dataIn));
-            gpio_put(clockIn, false);
+        for (int i = 0; i < 8; i++) {
+            printf("%d", (aFile >> (7 - i)) & 1);
         }
-        gpio_put(clockEnable, true);
+
+        printf("\n%d\n", aFile);
 
         sleep_ms(500);
         gpio_put(led, false);
