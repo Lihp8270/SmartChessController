@@ -126,12 +126,18 @@ int main() {
         if (dataRead != files[0]) {
             getFileLetter(0, fileLetter);
 
-            if (dataRead > files[0]) {
+            if ((dataRead > files[0]) && moveComplete == false) {
+                printf("MOVE ENDED\n");
                 printf("Piece placed: ");
+                moveComplete = true;
             }
 
             if (dataRead < files[0]) {
+                if (moveComplete = true) {
+                    printf("MOVE STARTED\n");
+                }
                 printf("Piece lifted: ");
+                moveComplete = false;
             }
 
             getChangedCoordinate(0, dataRead);
