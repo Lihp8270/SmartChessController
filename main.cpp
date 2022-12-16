@@ -162,7 +162,7 @@ int main() {
             }
 
             if (dataRead < files[0]) {
-                if (moveComplete = true) {
+                if (moveComplete == true) {
                     getChangedCoordinate(0, dataRead);
                     printf("MOVE STARTED\n");
                 }
