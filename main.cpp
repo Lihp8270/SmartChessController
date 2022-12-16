@@ -13,6 +13,11 @@ char fileLetter[1];
 char coord1[4];
 char coord2[4];
 
+bool moveComplete = true;
+
+// TODO Remove test bool
+bool tempStart = false;
+
 const uint led = 25;
 
 void getFileLetter(uint index, char* outStr) {
@@ -108,6 +113,14 @@ int main() {
     initShiftRegPins();
 
     while(true) {
+
+        // TODO Remove this holding loop used for testing.  Main program does not start until a piece is placed
+        while (files[0] != 0 && tempStart == false) {
+            sleep_ms(100);
+        }
+        tempStart = true;
+        // End of test code
+
         unsigned char dataRead = readShiftRegister();
 
         if (dataRead != files[0]) {
