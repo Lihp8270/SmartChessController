@@ -6,6 +6,16 @@ const uint clockEnable = 18;
 const uint dataIn = 14;
 const uint clockIn = 19;
 
+const uint load = 20;
+const uint clockEnable = 18;
+const uint dataIn = 14;
+const uint clockIn = 19;
+
+unsigned char files[8];
+char fileLetter[1];
+char coord1[4];
+char coord2[4];
+
 const uint led = 25;
 
 unsigned char files[8];
