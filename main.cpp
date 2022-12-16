@@ -1,8 +1,5 @@
 #include <stdio.h>
-#include <string>
 #include "pico/stdlib.h"
-
-using namespace std;
 
 const uint load = 20;
 const uint clockEnable = 18;
@@ -10,40 +7,42 @@ const uint dataIn = 14;
 const uint clockIn = 19;
 
 unsigned char files[8];
+char fileLetter[1];
+char coord1[4];
+char coord2[4];
 
 const uint led = 25;
 
-string getFileLetter(uint index) {
+void getFileLetter(uint index, char* outStr) {
     switch (index) {
         case 0:
-            return "a";
+            outStr[0] = 'a';
             break;
         case 1:
-            return "b";
+            outStr[0] = 'b';
             break;
         case 2:
-            return "c";
+            outStr[0] = 'c';
             break;
         case 3:
-            return "d";
+            outStr[0] = 'd';
             break;
         case 4:
-            return "e";
+            outStr[0] = 'e';
             break;
         case 5:
-            return "f";
+            outStr[0] = 'f';
             break;
         case 6:
-            return "g";
+            outStr[0] = 'g';
             break;
         case 7:
-            return "h";
+            outStr[0] = 'h';
             break;
         default:
+            outStr[0] = 'z';
             break;
     }
-
-    return "error";
 }
 
 void initShiftRegPins() {
@@ -98,13 +97,17 @@ int main() {
         gpio_put(led, true);
 
         files[0] = readShiftRegister();
+        getFileLetter(0, fileLetter);
 
         printf("Piece coordinates:\n");
         for (int i = 0; i < 8; i++) {
-            printf("%d", (files[0] >> (7 - i)) & 1);
+            if ((files[0] >> (7 - i) & 1) == 1) {
+                printf("%s", fileLetter);
+                printf("%d", (8 - i));
+                // printf("%d", (files[0] >> (7 - i)) & 1);
+            }
         }
-
-        printf("\n%d\n", files[0]);
+        printf("\n\n");
 
         sleep_ms(500);
         gpio_put(led, false);
