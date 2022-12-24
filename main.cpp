@@ -103,17 +103,17 @@ int main() {
         sleep_ms(500);
         gpio_put(led, true);
         
+        printf("Pieces placed: \n");
         // Get data from shift register
         for (int i = firstDataPin; i < (firstDataPin + numOfFiles); i++) {
             unsigned char data = readRegister(i);
             char file = getFileLetter(i);
 
-            printf("File %c pin states: ", file);
             for (int k = 0; k < 8; k++) {
-                printf("%d", (data >> (7 - k)) & 1);
+                if ((data >> (7 - k) & 1) == 1) {
+                    printf("%c%d\n", file, k + 1);
+                }
             }
-
-            printf("\n");
         }
         printf("\n");        
 
