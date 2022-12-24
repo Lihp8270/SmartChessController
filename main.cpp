@@ -1,86 +1,126 @@
 #include <stdio.h>
 #include "pico/stdlib.h"
 
+// Shift register pins
 const uint load = 20;
 const uint clockEnable = 18;
-const uint dataIn = 14;
 const uint clockIn = 19;
 
-unsigned char files[8];
-unsigned char filesLastState[8];
+// Data input pins
+const uint firstDataPin = 14;
+const uint numOfFiles = 2;
 
-char fileLetter[1];
-char coord1[2];
-char coord2[2];
+// Data stores
+unsigned char lastState[numOfFiles];
+unsigned char liftedPieceUCIFile;
+unsigned char liftedPieceUCIRank;
+unsigned char placedPieceUCIFile;
+unsigned char placedPieceUCIRank;
+bool moveStarted = false;
+bool moveComplete = false;
 
-bool moveComplete = true;
-bool gameStarted = false;
-
-// TODO Remove test bool
-bool tempStart = false;
-
+// Misc
 const uint led = 25;
 
-void getFileLetter(uint index, char* outStr) {
-    switch (index) {
-        case 0:
-            outStr[0] = 'a';
-            break;
-        case 1:
-            outStr[0] = 'b';
-            break;
-        case 2:
-            outStr[0] = 'c';
-            break;
-        case 3:
-            outStr[0] = 'd';
-            break;
-        case 4:
-            outStr[0] = 'e';
-            break;
-        case 5:
-            outStr[0] = 'f';
-            break;
-        case 6:
-            outStr[0] = 'g';
-            break;
-        case 7:
-            outStr[0] = 'h';
-            break;
-        default:
-            outStr[0] = 'z';
-            break;
-    }
-}
+void initPins() {
+    gpio_init(led);
+    gpio_set_dir(led, GPIO_OUT);
 
-void getChangedCoordinate(int fileIndex, char newData) {
-    for (int i = 0; i < 8; i++) {
-        if ( (files[0] >> (7 - i) & 1) != (newData >> (7 - i) & 1) ) {
-            int rank = 8 - i;
-
-            if (moveComplete == false) {
-                coord1[0] = fileLetter[0];
-                coord1[1] = char(rank);
-            } else {
-                coord2[0] = fileLetter[0];
-                coord2[1] = char(rank);
-            }
-        }
-    }
-}
-
-void initShiftRegPins() {
     gpio_init(load);
     gpio_init(clockEnable);
-    gpio_init(dataIn);
     gpio_init(clockIn);
 
     gpio_set_dir(load, GPIO_OUT);
     gpio_set_dir(clockEnable, GPIO_OUT);
     gpio_set_dir(clockIn, GPIO_OUT);
-    gpio_set_dir(dataIn, GPIO_IN);
 
-    gpio_pull_up(dataIn);
+    // Init all data input pins
+    gpio_init(14);
+    gpio_init(15);
+    gpio_set_dir(14, GPIO_IN);
+    gpio_set_dir(15, GPIO_IN);
+    gpio_pull_up(14);
+    gpio_pull_up(15);
+}
+
+enum PieceAction {
+    PIECE_LIFTED = true,
+    PIECE_PLACED = false,
+};
+
+char getFileLetter(uint dataPin) {
+    switch (dataPin) {
+        case firstDataPin:
+            return 'a';
+            break;
+        case firstDataPin + 1:
+            return 'b';
+            break;
+        case firstDataPin + 2:
+            return 'v';
+            break;
+        case firstDataPin + 3:
+            return 'd';
+            break;
+        case firstDataPin + 4:
+            return 'e';
+            break;
+        case firstDataPin + 5:
+            return 'f';
+            break;
+        case firstDataPin + 6:
+            return 'g';
+            break;
+        case firstDataPin + 7:
+            return 'h';
+            break;
+        default:
+            return 'z';
+            break;
+    }
+}
+
+void shiftPinStatesToRegister() {
+    // Pulse load pin to get data from parallel input
+    gpio_put(load, false);
+    sleep_ms(5);
+    gpio_put(load, true);
+    sleep_ms(5);
+}
+
+unsigned char readRegister(uint dataPin) {
+    unsigned char registerData = 0b00000000;
+
+    shiftPinStatesToRegister();
+
+    gpio_put(clockEnable, false);
+
+    for (int i = 0; i < 8; i++) {
+        gpio_put(clockIn, true);
+        registerData |= gpio_get(dataPin) << i;
+        gpio_put(clockIn, false);
+    }
+
+    gpio_put(clockEnable, true);
+
+    return registerData;
+}
+
+void populatePieceUCI(PieceAction lifted, unsigned char newState, unsigned char savedState, uint dataPin) {
+    unsigned char file = getFileLetter(dataPin);
+
+    for (int i = 0; i < 8; i++) {
+        if ((newState >> (7 - i) & 1) != (savedState >> (7 - i) & 1)) {
+            uint rank = 8 - i;
+            if (lifted) {
+                liftedPieceUCIFile = file;
+                liftedPieceUCIRank = rank;
+            } else {
+                placedPieceUCIFile = file;
+                placedPieceUCIRank = rank;
+            }
+        }
+    }
 }
 
 void readShiftRegisterPins() {
@@ -119,59 +159,54 @@ bool wasMoveCancelled() {
 
 int main() {
     stdio_init_all();
-    gpio_init(led);
-    gpio_set_dir(led, GPIO_OUT);
-    gpio_put(led, true);
-    initShiftRegPins();
+    initPins();
 
     while(true) {
+        gpio_put(led, true);
+        
+        // Get data from shift register for each file
+        for (int dataPin = firstDataPin; dataPin < (firstDataPin + numOfFiles); dataPin++) {
+            unsigned char savedState = lastState[dataPin - firstDataPin];
+            unsigned char newState = readRegister(dataPin);
+            char file = getFileLetter(dataPin);
 
-        // TODO Remove this holding loop used for testing.  Main program does not start until a piece is placed
-        while (files[0] != 0 && tempStart == false) {
-            sleep_ms(100);
-        }
-        tempStart = true;
-        // End of test code
+            // Check if file state has changed
+            if (newState != savedState) {
+    
+                // If current state is greater than saved, piece has been placed
+                if ((newState > savedState) && moveStarted) {
+                    populatePieceUCI(PIECE_PLACED, newState, savedState, dataPin);
 
-        unsigned char dataRead = readShiftRegister();
-
-        if (dataRead != files[0]) {
-            getFileLetter(0, fileLetter);
-
-            if ((dataRead > files[0]) && moveComplete == false) {
-                getChangedCoordinate(0, dataRead);
-                printf("MOVE ENDED\n");
-                    
-                moveComplete = true;
-                if (!gameStarted) {
-                    gameStarted = true;
+                    // Move is only complete if placed coords do not equal the lifted coords
+                    if (placedPieceUCIFile != liftedPieceUCIFile) {
+                        moveComplete = true;
+                    } else {
+                        if (placedPieceUCIRank != liftedPieceUCIRank) {
+                            moveComplete = true;
+                        } else {
+                            moveComplete = false;
+                        }
+                    }
+                    moveStarted = false;
                 }
 
-                if (moveComplete && gameStarted && !wasMoveCancelled()) {
-                    printf("UCI: ");
-                    printf("%c", coord1[0]);
-                    printf("%d", coord1[1]);
-                    printf("%c", coord2[0]);
-                    printf("%d", coord2[1]);
-                    printf("\n\n");
+                // If current state is less than saved, place has been lifted
+                if ((newState < savedState) && !moveStarted) {
+                    moveStarted = true;
+                    populatePieceUCI(PIECE_LIFTED, newState, savedState, dataPin);
                 }
-
-                if (wasMoveCancelled()) {
-                    printf("Piece replaced! Move Cancelled\n\n");
-                }
+                
+                // Save current state
+                lastState[dataPin - firstDataPin] = newState;
             }
-
-            if (dataRead < files[0]) {
-                if (moveComplete == true) {
-                    getChangedCoordinate(0, dataRead);
-                    printf("MOVE STARTED\n");
-                }
-                moveComplete = false;
-            }
-
-            files[0] = dataRead;
         }
 
-        sleep_ms(10);
+        if (moveComplete) {
+            printf("%c%d%c%d\n\n", liftedPieceUCIFile, liftedPieceUCIRank, placedPieceUCIFile, placedPieceUCIRank);
+            moveComplete = false;
+            moveStarted = false;
+        }
+
+        sleep_ms(1);
     }
 }
