@@ -12,6 +12,10 @@ const uint numOfFiles = 2;
 
 // Data stores
 unsigned char lastState[numOfFiles];
+unsigned char liftedPieceUCIFile;
+unsigned char liftedPieceUCIRank;
+unsigned char placedPieceUCIFile;
+unsigned char placedPieceUCIRank;
 
 // Misc
 const uint led = 25;
@@ -36,6 +40,11 @@ void initPins() {
     gpio_pull_up(14);
     gpio_pull_up(15);
 }
+
+enum PieceAction {
+    PIECE_LIFTED = true,
+    PIECE_PLACED = false,
+};
 
 char getFileLetter(uint dataPin) {
     switch (dataPin) {
@@ -95,45 +104,56 @@ unsigned char readRegister(uint dataPin) {
     return registerData;
 }
 
+void populatePieceUCI(PieceAction lifted, unsigned char newState, unsigned char savedState, uint dataPin) {
+    unsigned char file = getFileLetter(dataPin);
+
+    for (int i = 0; i < 8; i++) {
+        if ((newState >> (7 - i) & 1) != (savedState >> (7 - i) & 1)) {
+            uint rank = 8 - i;
+            if (lifted) {
+                liftedPieceUCIFile = file;
+                liftedPieceUCIRank = rank;
+            } else {
+                placedPieceUCIFile = file;
+                placedPieceUCIRank = rank;
+            }
+        }
+    }
+}
+
 int main() {
     stdio_init_all();
     initPins();
 
     while(true) {
-        sleep_ms(500);
         gpio_put(led, true);
         
         // Get data from shift register for each file
-        for (int i = firstDataPin; i < (firstDataPin + numOfFiles); i++) {
-            unsigned char savedState = lastState[i - firstDataPin];
-            unsigned char data = readRegister(i);
-            char file = getFileLetter(i);
+        for (int dataPin = firstDataPin; dataPin < (firstDataPin + numOfFiles); dataPin++) {
+            unsigned char savedState = lastState[dataPin - firstDataPin];
+            unsigned char newState = readRegister(dataPin);
+            char file = getFileLetter(dataPin);
 
             // Check if file state has changed
-            if (data != savedState) {
-                
+            if (newState != savedState) {
+    
                 // If current state is greater than saved, piece has been placed
-                if (data > savedState) {
-                    printf("Piece placed on file %c\n", file);
+                if (newState > savedState) {
+                    populatePieceUCI(PIECE_PLACED, newState, savedState, dataPin);
+                    printf("%c%d", placedPieceUCIFile, placedPieceUCIRank);
                 }
 
                 // If current state is less than saved, place has been lifted
-                if (data < savedState) {
-                    printf("Piece lifted on file %c\n", file);
+                if (newState < savedState) {
+                    populatePieceUCI(PIECE_LIFTED, newState, savedState, dataPin);
+                    printf("%c%d", liftedPieceUCIFile, liftedPieceUCIRank);
                 }
                 
                 // Save current state
-                lastState[i - firstDataPin] = data;
+                lastState[dataPin - firstDataPin] = newState;
             }
-
-            // for (int k = 0; k < 8; k++) {
-            //     if ((data >> (7 - k) & 1) == 1) {
-            //         printf("%c%d\n", file, k + 1);
-            //     }
-            // }
         }    
 
-        sleep_ms(500);
-        gpio_put(led, false);
+        sleep_ms(1);
     }
 }
