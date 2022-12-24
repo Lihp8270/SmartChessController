@@ -103,19 +103,35 @@ int main() {
         sleep_ms(500);
         gpio_put(led, true);
         
-        printf("Pieces placed: \n");
-        // Get data from shift register
+        // Get data from shift register for each file
         for (int i = firstDataPin; i < (firstDataPin + numOfFiles); i++) {
+            unsigned char savedState = lastState[i - firstDataPin];
             unsigned char data = readRegister(i);
             char file = getFileLetter(i);
 
-            for (int k = 0; k < 8; k++) {
-                if ((data >> (7 - k) & 1) == 1) {
-                    printf("%c%d\n", file, k + 1);
+            // Check if file state has changed
+            if (data != savedState) {
+                
+                // If current state is greater than saved, piece has been placed
+                if (data > savedState) {
+                    printf("Piece placed on file %c\n", file);
                 }
+
+                // If current state is less than saved, place has been lifted
+                if (data < savedState) {
+                    printf("Piece lifted on file %c\n", file);
+                }
+                
+                // Save current state
+                lastState[i - firstDataPin] = data;
             }
-        }
-        printf("\n");        
+
+            // for (int k = 0; k < 8; k++) {
+            //     if ((data >> (7 - k) & 1) == 1) {
+            //         printf("%c%d\n", file, k + 1);
+            //     }
+            // }
+        }    
 
         sleep_ms(500);
         gpio_put(led, false);
