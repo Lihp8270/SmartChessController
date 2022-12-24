@@ -123,6 +123,40 @@ void populatePieceUCI(PieceAction lifted, unsigned char newState, unsigned char 
     }
 }
 
+void readShiftRegisterPins() {
+    // Pulse load pin to get data from parallel input
+    gpio_put(load, false);
+    sleep_ms(5);
+    gpio_put(load, true);
+    sleep_ms(5);
+}
+
+unsigned char readShiftRegister() {
+    unsigned char registerData = 0b00000000;
+
+    readShiftRegisterPins();
+
+    // Get data from shift register
+    gpio_put(clockEnable, false);
+
+    for (int i = 0; i < 8; i++) {
+        gpio_put(clockIn, true);
+        registerData |= gpio_get(dataIn) << i;
+        gpio_put(clockIn, false);
+    }
+    gpio_put(clockEnable, true);
+
+    return registerData;
+}
+
+bool wasMoveCancelled() {
+    if (coord1[0] == coord2[0] && coord1[1] == coord2[1]) {
+        return true;
+    }
+
+    return false;
+}
+
 int main() {
     stdio_init_all();
     initPins();
