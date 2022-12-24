@@ -10,6 +10,9 @@ const uint clockIn = 19;
 const uint firstDataPin = 14;
 const uint numOfFiles = 2;
 
+// Data stores
+unsigned char lastState[numOfFiles];
+
 // Misc
 const uint led = 25;
 
@@ -42,12 +45,22 @@ void shiftPinStatesToRegister() {
     sleep_ms(5);
 }
 
-void showFileStates(uint dataPin) {
-    for (int k = 0; k < 8; k++) {
+unsigned char readRegister(uint dataPin) {
+    unsigned char registerData = 0b00000000;
+
+    shiftPinStatesToRegister();
+
+    gpio_put(clockEnable, false);
+
+    for (int i = 0; i < 8; i++) {
         gpio_put(clockIn, true);
-        printf("%d", gpio_get(dataPin));
+        registerData |= gpio_get(dataPin) << i;
         gpio_put(clockIn, false);
     }
+
+    gpio_put(clockEnable, true);
+
+    return registerData;
 }
 
 int main() {
@@ -60,15 +73,13 @@ int main() {
         
         // Get data from shift register
         for (int i = firstDataPin; i < (firstDataPin + numOfFiles); i++) {
-            shiftPinStatesToRegister();
-
-            gpio_put(clockEnable, false);      
+            unsigned char data = readRegister(i);
 
             printf("Pin %d states: ", i);
-            
-            showFileStates(i);
+            for (int k = 0; k < 8; k++) {
+                printf("%d", (data >> (7 - k)) & 1);
+            }
 
-            gpio_put(clockEnable, true);
             printf("\n");
         }
         printf("\n");        
