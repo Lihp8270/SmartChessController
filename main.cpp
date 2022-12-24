@@ -16,6 +16,8 @@ unsigned char liftedPieceUCIFile;
 unsigned char liftedPieceUCIRank;
 unsigned char placedPieceUCIFile;
 unsigned char placedPieceUCIRank;
+bool moveStarted = false;
+bool moveComplete = false;
 
 // Misc
 const uint led = 25;
@@ -138,21 +140,38 @@ int main() {
             if (newState != savedState) {
     
                 // If current state is greater than saved, piece has been placed
-                if (newState > savedState) {
+                if ((newState > savedState) && moveStarted) {
                     populatePieceUCI(PIECE_PLACED, newState, savedState, dataPin);
-                    printf("%c%d", placedPieceUCIFile, placedPieceUCIRank);
+
+                    // Move is only complete if placed coords do not equal the lifted coords
+                    if (placedPieceUCIFile != liftedPieceUCIFile) {
+                        moveComplete = true;
+                    } else {
+                        if (placedPieceUCIRank != liftedPieceUCIRank) {
+                            moveComplete = true;
+                        } else {
+                            moveComplete = false;
+                        }
+                    }
+                    moveStarted = false;
                 }
 
                 // If current state is less than saved, place has been lifted
-                if (newState < savedState) {
+                if ((newState < savedState) && !moveStarted) {
+                    moveStarted = true;
                     populatePieceUCI(PIECE_LIFTED, newState, savedState, dataPin);
-                    printf("%c%d", liftedPieceUCIFile, liftedPieceUCIRank);
                 }
                 
                 // Save current state
                 lastState[dataPin - firstDataPin] = newState;
             }
-        }    
+        }
+
+        if (moveComplete) {
+            printf("%c%d%c%d\n\n", liftedPieceUCIFile, liftedPieceUCIRank, placedPieceUCIFile, placedPieceUCIRank);
+            moveComplete = false;
+            moveStarted = false;
+        }
 
         sleep_ms(1);
     }
