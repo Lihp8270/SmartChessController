@@ -37,6 +37,38 @@ void initPins() {
     gpio_pull_up(15);
 }
 
+char getFileLetter(uint dataPin) {
+    switch (dataPin) {
+        case firstDataPin:
+            return 'a';
+            break;
+        case firstDataPin + 1:
+            return 'b';
+            break;
+        case firstDataPin + 2:
+            return 'v';
+            break;
+        case firstDataPin + 3:
+            return 'd';
+            break;
+        case firstDataPin + 4:
+            return 'e';
+            break;
+        case firstDataPin + 5:
+            return 'f';
+            break;
+        case firstDataPin + 6:
+            return 'g';
+            break;
+        case firstDataPin + 7:
+            return 'h';
+            break;
+        default:
+            return 'z';
+            break;
+    }
+}
+
 void shiftPinStatesToRegister() {
     // Pulse load pin to get data from parallel input
     gpio_put(load, false);
@@ -74,8 +106,9 @@ int main() {
         // Get data from shift register
         for (int i = firstDataPin; i < (firstDataPin + numOfFiles); i++) {
             unsigned char data = readRegister(i);
+            char file = getFileLetter(i);
 
-            printf("Pin %d states: ", i);
+            printf("File %c pin states: ", file);
             for (int k = 0; k < 8; k++) {
                 printf("%d", (data >> (7 - k)) & 1);
             }
