@@ -18,6 +18,7 @@ unsigned char placedPieceUCIFile;
 unsigned char placedPieceUCIRank;
 bool moveStarted = false;
 bool moveComplete = false;
+bool isPieceLifted = false;
 
 // Misc
 const uint led = 25;
@@ -123,6 +124,19 @@ void populatePieceUCI(PieceAction lifted, unsigned char newState, unsigned char 
     }
 }
 
+void checkMoveComplete() {
+    if (placedPieceUCIFile != liftedPieceUCIFile) {
+        moveComplete = true;
+    } else {
+        if (placedPieceUCIRank != liftedPieceUCIRank) {
+            moveComplete = true;
+        } else {
+            moveComplete = false;
+        }
+    }
+    moveStarted = false;
+}
+
 int main() {
     stdio_init_all();
     initPins();
@@ -142,23 +156,16 @@ int main() {
                 // If current state is greater than saved, piece has been placed
                 if ((newState > savedState) && moveStarted) {
                     populatePieceUCI(PIECE_PLACED, newState, savedState, dataPin);
+                    isPieceLifted = false;
 
                     // Move is only complete if placed coords do not equal the lifted coords
-                    if (placedPieceUCIFile != liftedPieceUCIFile) {
-                        moveComplete = true;
-                    } else {
-                        if (placedPieceUCIRank != liftedPieceUCIRank) {
-                            moveComplete = true;
-                        } else {
-                            moveComplete = false;
-                        }
-                    }
-                    moveStarted = false;
+                    checkMoveComplete();
                 }
 
                 // If current state is less than saved, place has been lifted
-                if ((newState < savedState) && !moveStarted) {
+                if ((newState < savedState) && !moveStarted && !isPieceLifted) {
                     moveStarted = true;
+                    isPieceLifted = true;
                     populatePieceUCI(PIECE_LIFTED, newState, savedState, dataPin);
                 }
                 
