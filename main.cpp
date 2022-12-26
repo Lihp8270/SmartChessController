@@ -140,11 +140,20 @@ void changeColourToPlay() {
     colourToPlay = !colourToPlay;
 }
 
+void isMoveCastles() {
+    if (placedPieceUCIRank == 1 || placedPieceUCIRank == 8) {
+        printf("On back rank");
+    } else {
+        printf("Not back rank");
+    }
+}
+
 void completeMove() {
     if (placedPieceUCIFile != liftedPieceUCIFile) {
         moveComplete = true;
     } else {
         if (placedPieceUCIRank != liftedPieceUCIRank) {
+            isMoveCastles();
             moveComplete = true;
         } else {
             moveComplete = false;
