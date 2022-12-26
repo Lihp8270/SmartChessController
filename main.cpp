@@ -1,6 +1,17 @@
 #include <stdio.h>
 #include "pico/stdlib.h"
 
+// Enums
+enum PieceAction {
+    PIECE_LIFTED = true,
+    PIECE_PLACED = false,
+};
+
+enum PieceColour {
+    WHITE = true,
+    BLACK = false,
+};
+
 // Shift register pins
 const uint load = 20;
 const uint clockEnable = 18;
@@ -18,6 +29,8 @@ unsigned char placedPieceUCIFile;
 unsigned char placedPieceUCIRank;
 bool moveStarted = false;
 bool moveComplete = false;
+bool playerColour = WHITE;
+bool colourToPlay = WHITE;
 
 // Misc
 const uint led = 25;
@@ -42,11 +55,6 @@ void initPins() {
     gpio_pull_up(14);
     gpio_pull_up(15);
 }
-
-enum PieceAction {
-    PIECE_LIFTED = true,
-    PIECE_PLACED = false,
-};
 
 char getFileLetter(uint dataPin) {
     switch (dataPin) {
@@ -123,6 +131,27 @@ void populatePieceUCI(PieceAction lifted, unsigned char newState, unsigned char 
     }
 }
 
+void setPlayerColour(PieceColour colour) {
+    playerColour = colour;
+}
+
+void changeColourToPlay() {
+    colourToPlay = !colourToPlay;
+}
+
+void completeMove() {
+    if (placedPieceUCIFile != liftedPieceUCIFile) {
+        moveComplete = true;
+    } else {
+        if (placedPieceUCIRank != liftedPieceUCIRank) {
+            moveComplete = true;
+        } else {
+            moveComplete = false;
+        }
+    }
+    moveStarted = false;
+}
+
 int main() {
     stdio_init_all();
     initPins();
@@ -144,16 +173,7 @@ int main() {
                     populatePieceUCI(PIECE_PLACED, newState, savedState, dataPin);
 
                     // Move is only complete if placed coords do not equal the lifted coords
-                    if (placedPieceUCIFile != liftedPieceUCIFile) {
-                        moveComplete = true;
-                    } else {
-                        if (placedPieceUCIRank != liftedPieceUCIRank) {
-                            moveComplete = true;
-                        } else {
-                            moveComplete = false;
-                        }
-                    }
-                    moveStarted = false;
+                    completeMove();
                 }
 
                 // If current state is less than saved, place has been lifted
@@ -169,8 +189,10 @@ int main() {
 
         if (moveComplete) {
             printf("%c%d%c%d\n\n", liftedPieceUCIFile, liftedPieceUCIRank, placedPieceUCIFile, placedPieceUCIRank);
+            changeColourToPlay();
             moveComplete = false;
             moveStarted = false;
+            printf("%d to play\n", colourToPlay);
         }
 
         sleep_ms(1);
