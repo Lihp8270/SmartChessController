@@ -31,6 +31,7 @@ bool moveStarted = false;
 bool moveComplete = false;
 bool playerColour = WHITE;
 bool colourToPlay = WHITE;
+bool isPieceLifted = false;
 
 // Misc
 const uint led = 25;
@@ -171,14 +172,16 @@ int main() {
                 // If current state is greater than saved, piece has been placed
                 if ((newState > savedState) && moveStarted) {
                     populatePieceUCI(PIECE_PLACED, newState, savedState, dataPin);
+                    isPieceLifted = false;
 
                     // Move is only complete if placed coords do not equal the lifted coords
                     completeMove();
                 }
 
                 // If current state is less than saved, place has been lifted
-                if ((newState < savedState) && !moveStarted) {
+                if ((newState < savedState) && !moveStarted && !isPieceLifted) {
                     moveStarted = true;
+                    isPieceLifted = true;
                     populatePieceUCI(PIECE_LIFTED, newState, savedState, dataPin);
                 }
                 
