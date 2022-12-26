@@ -31,6 +31,7 @@ bool moveStarted = false;
 bool moveComplete = false;
 bool playerColour = WHITE;
 bool colourToPlay = WHITE;
+bool isPieceLifted = false;
 
 // Misc
 const uint led = 25;
