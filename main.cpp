@@ -32,6 +32,8 @@ bool moveComplete = false;
 bool playerColour = WHITE;
 bool colourToPlay = WHITE;
 bool isPieceLifted = false;
+bool blackCanCastle = true;
+bool whiteCanCastle = true;
 
 // Misc
 const uint led = 25;
@@ -140,12 +142,30 @@ void changeColourToPlay() {
     colourToPlay = !colourToPlay;
 }
 
-void isMoveCastles() {
-    if (placedPieceUCIRank == 1 || placedPieceUCIRank == 8) {
-        printf("On back rank");
-    } else {
-        printf("Not back rank");
+bool isKingMove() {
+    if (liftedPieceUCIFile == 'e') {
+        if (liftedPieceUCIRank == '1') {
+            whiteCanCastle = false;
+        }
+
+        if (liftedPieceUCIRank == '8') {
+            blackCanCastle = false;
+        }
     }
+
+    return false;
+}
+
+
+void isMoveCastles() {
+    if (isKingMove()) {
+        if (placedPieceUCIFile == 'g' || placedPieceUCIRank == 'c') {
+            printf("This is castles");
+        } else {
+            printf("This is not castles");
+        }
+    }
+    
 }
 
 void completeMove() {
@@ -153,7 +173,12 @@ void completeMove() {
         moveComplete = true;
     } else {
         if (placedPieceUCIRank != liftedPieceUCIRank) {
-            isMoveCastles();
+            
+            if (whiteCanCastle || blackCanCastle) {
+                // Check if this move prevents castling
+                isMoveCastles();
+            };
+
             moveComplete = true;
         } else {
             moveComplete = false;
