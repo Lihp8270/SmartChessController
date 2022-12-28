@@ -18,8 +18,8 @@ const uint clockEnable = 18;
 const uint clockIn = 19;
 
 // Data input pins
-const uint firstDataPin = 14;
-const uint numOfFiles = 2;
+const uint firstDataPin = 1;
+const uint numOfFiles = 3;
 
 // Data stores
 unsigned char lastState[numOfFiles];
@@ -51,12 +51,17 @@ void initPins() {
     gpio_set_dir(clockIn, GPIO_OUT);
 
     // Init all data input pins
-    gpio_init(14);
-    gpio_init(15);
-    gpio_set_dir(14, GPIO_IN);
-    gpio_set_dir(15, GPIO_IN);
-    gpio_pull_up(14);
-    gpio_pull_up(15);
+    gpio_init(1);
+    gpio_init(2);
+    gpio_init(3);
+
+    gpio_set_dir(1, GPIO_IN);
+    gpio_set_dir(2, GPIO_IN);
+    gpio_set_dir(3, GPIO_IN);
+
+    gpio_pull_up(1);
+    gpio_pull_up(2);
+    gpio_pull_up(3);
 }
 
 char getFileLetter(uint dataPin) {
@@ -68,7 +73,7 @@ char getFileLetter(uint dataPin) {
             return 'b';
             break;
         case firstDataPin + 2:
-            return 'v';
+            return 'c';
             break;
         case firstDataPin + 3:
             return 'd';
