@@ -230,6 +230,7 @@ int main() {
         if (moveComplete) {
             if (whiteCanCastle || blackCanCastle) {
                 isMoveCastles();
+                // Todo only print UCI move after castle has been correctly placed
             }
 
             printf("%c%d%c%d\n\n", liftedPieceUCIFile, liftedPieceUCIRank, placedPieceUCIFile, placedPieceUCIRank);
