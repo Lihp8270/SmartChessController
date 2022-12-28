@@ -151,12 +151,12 @@ void changeColourToPlay() {
 
 bool isKingMove() {
     if (liftedPieceUCIFile == 'e') {
-        if (liftedPieceUCIRank == 1) {
+        if (liftedPieceUCIRank == 1 && whiteCanCastle) {
             whiteCanCastle = false;
             return true;
         }
 
-        if (liftedPieceUCIRank == 8) {
+        if (liftedPieceUCIRank == 8 && blackCanCastle) {
             blackCanCastle = false;
             return true;
         }
