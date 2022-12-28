@@ -67,12 +67,10 @@ void initPins() {
 char getFileLetter(uint dataPin) {
     switch (dataPin) {
         case firstDataPin:
-            // return 'a';
-            return 'e';
+            return 'a';
             break;
         case firstDataPin + 1:
-            // return 'b';
-            return 'g';
+            return 'b';
             break;
         case firstDataPin + 2:
             return 'c';
