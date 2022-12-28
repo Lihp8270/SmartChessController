@@ -67,10 +67,12 @@ void initPins() {
 char getFileLetter(uint dataPin) {
     switch (dataPin) {
         case firstDataPin:
-            return 'a';
+            // return 'a';
+            return 'e';
             break;
         case firstDataPin + 1:
-            return 'b';
+            // return 'b';
+            return 'g';
             break;
         case firstDataPin + 2:
             return 'c';
@@ -149,12 +151,14 @@ void changeColourToPlay() {
 
 bool isKingMove() {
     if (liftedPieceUCIFile == 'e') {
-        if (liftedPieceUCIRank == '1') {
+        if (liftedPieceUCIRank == 1) {
             whiteCanCastle = false;
+            return true;
         }
 
-        if (liftedPieceUCIRank == '8') {
+        if (liftedPieceUCIRank == 8) {
             blackCanCastle = false;
+            return true;
         }
     }
 
@@ -164,7 +168,7 @@ bool isKingMove() {
 
 void isMoveCastles() {
     if (isKingMove()) {
-        if (placedPieceUCIFile == 'g' || placedPieceUCIRank == 'c') {
+        if (placedPieceUCIFile == 'g' || placedPieceUCIFile == 'c') {
             printf("This is castles");
         } else {
             printf("This is not castles");
@@ -178,12 +182,6 @@ void completeMove() {
         moveComplete = true;
     } else {
         if (placedPieceUCIRank != liftedPieceUCIRank) {
-            
-            if (whiteCanCastle || blackCanCastle) {
-                // Check if this move prevents castling
-                isMoveCastles();
-            };
-
             moveComplete = true;
         } else {
             moveComplete = false;
@@ -230,11 +228,14 @@ int main() {
         }
 
         if (moveComplete) {
+            if (whiteCanCastle || blackCanCastle) {
+                isMoveCastles();
+            }
+
             printf("%c%d%c%d\n\n", liftedPieceUCIFile, liftedPieceUCIRank, placedPieceUCIFile, placedPieceUCIRank);
             changeColourToPlay();
             moveComplete = false;
             moveStarted = false;
-            printf("%d to play\n", colourToPlay);
         }
 
         sleep_ms(1);
