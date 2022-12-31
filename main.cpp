@@ -7,11 +7,6 @@ enum PieceAction {
     PIECE_PLACED = false,
 };
 
-enum PieceColour {
-    WHITE = true,
-    BLACK = false,
-};
-
 // Shift register pins
 const uint load = 20;
 const uint clockEnable = 18;
@@ -29,8 +24,6 @@ unsigned char placedPieceUCIFile;
 unsigned char placedPieceUCIRank;
 bool moveStarted = false;
 bool moveComplete = false;
-bool playerColour = WHITE;
-bool colourToPlay = WHITE;
 bool isPieceLifted = false;
 
 // Misc
@@ -137,14 +130,6 @@ void populatePieceUCI(PieceAction lifted, unsigned char newState, unsigned char 
     }
 }
 
-void setPlayerColour(PieceColour colour) {
-    playerColour = colour;
-}
-
-void changeColourToPlay() {
-    colourToPlay = !colourToPlay;
-}
-
 void completeMove() {
     if (placedPieceUCIFile != liftedPieceUCIFile) {
         moveComplete = true;
@@ -197,7 +182,6 @@ int main() {
 
         if (moveComplete) {
             printf("%c%d%c%d", liftedPieceUCIFile, liftedPieceUCIRank, placedPieceUCIFile, placedPieceUCIRank);
-            changeColourToPlay();
             moveComplete = false;
             moveStarted = false;
         }
