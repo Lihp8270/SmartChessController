@@ -32,8 +32,6 @@ bool moveComplete = false;
 bool playerColour = WHITE;
 bool colourToPlay = WHITE;
 bool isPieceLifted = false;
-bool blackCanCastle = true;
-bool whiteCanCastle = true;
 
 // Misc
 const uint led = 25;
@@ -147,34 +145,6 @@ void changeColourToPlay() {
     colourToPlay = !colourToPlay;
 }
 
-bool isKingMove() {
-    if (liftedPieceUCIFile == 'e') {
-        if (liftedPieceUCIRank == 1 && whiteCanCastle) {
-            whiteCanCastle = false;
-            return true;
-        }
-
-        if (liftedPieceUCIRank == 8 && blackCanCastle) {
-            blackCanCastle = false;
-            return true;
-        }
-    }
-
-    return false;
-}
-
-
-void isMoveCastles() {
-    if (isKingMove()) {
-        if (placedPieceUCIFile == 'g' || placedPieceUCIFile == 'c') {
-            printf("This is castles");
-        } else {
-            printf("This is not castles");
-        }
-    }
-    
-}
-
 void completeMove() {
     if (placedPieceUCIFile != liftedPieceUCIFile) {
         moveComplete = true;
@@ -226,12 +196,7 @@ int main() {
         }
 
         if (moveComplete) {
-            if (whiteCanCastle || blackCanCastle) {
-                isMoveCastles();
-                // Todo only print UCI move after castle has been correctly placed
-            }
-
-            printf("%c%d%c%d\n\n", liftedPieceUCIFile, liftedPieceUCIRank, placedPieceUCIFile, placedPieceUCIRank);
+            printf("%c%d%c%d", liftedPieceUCIFile, liftedPieceUCIRank, placedPieceUCIFile, placedPieceUCIRank);
             changeColourToPlay();
             moveComplete = false;
             moveStarted = false;
